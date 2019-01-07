@@ -47,13 +47,14 @@ public interface MySQLUserMapper {
     List<UserFriend> getFriendAddUser(@Param("user_id") String user_id);
 
 
+
     /**
      * 得到用户跟他人是否存在待确定关系
      * @param user_id
      * @param friend_id
      * @return
      */
-    @Select("select count(*) from user_friend where friend_id=#{user_id} and user_id=#{friend_id} )")
+    @Select("select count(*) from user_friend where user_id=#{user_id} and friend_id=#{friend_id} ")
     int getFriendUser(@Param("user_id") String user_id,@Param("friend_id") String friend_id);
 
 
@@ -69,11 +70,19 @@ public interface MySQLUserMapper {
 
 
     /**
+     * 拒绝添加
+     * @param user_id
+     * @param friend_id
+     */
+    @Delete("delete from user_friend where user_id=#{user_id} and friend_id=#{friend_id}")
+    void deleteUserFriend(@Param("user_id") String user_id,@Param("friend_id")String friend_id);
+
+    /**
      * 更新好友关系关系
      * @param user_id
      * @param friend_id
      */
-    @Update("update uer_friend set is_friend=1 where user_id=#{user_id} and friend_id=#{friend_id}")
+    @Update("update user_friend set is_friend=1 where user_id=#{user_id} and friend_id=#{friend_id}")
     void updateUserFriend(@Param("user_id")String user_id,@Param("friend_id")String friend_id);
 
 
@@ -96,6 +105,14 @@ public interface MySQLUserMapper {
      */
     @Update("update message set message_state=1 where user_id=#{user_id}")
     void updateIsMessage(@Param("user_id")String user_id);
+
+    /**
+     * 更新消息状态
+     * @param user_id
+     * @param friend_id
+     */
+    @Update("update message set message_state=1 where user_id=#{user_id} and friend_id=#{friend_id}")
+    void updateMessageSate(@Param("user_id")String user_id,@Param("friend_id")String friend_id);
 
     /**
      * 获取聊天记录
@@ -122,7 +139,7 @@ public interface MySQLUserMapper {
      * @param time
      */
     @Insert("insert into message(user_id,friend_id,message,message_state,put_id,time)" +
-            "value(#{user_id},#{friend_id},#{message},#{message_state},#{put_id},#{time}")
+            "value(#{user_id},#{friend_id},#{message},#{message_state},#{put_id},#{time})")
     void addMessage(@Param("user_id")String user_id,@Param("friend_id")String friend_id,
                     @Param("message")String message,@Param("message_state")int message_state,
                     @Param("put_id")int put_id, @Param("time") String time);
@@ -159,5 +176,20 @@ public interface MySQLUserMapper {
     @Delete("delete from is_user where user_id=#{user_id}")
     void deleteUserIP(@Param("user_id")String user_id);
 
+    /**
+     * 删除好友联系
+     * @param user_id
+     * @param friend_id
+     */
+    @Delete("delete from user_friend where user_id=#{user_id} and friend_id =#{friend_id}")
+    void deleteFriend(@Param("user_id")String user_id,@Param("friend_id")String friend_id);
+
+    /**
+     * 删除聊天记录
+     * @param user_id
+     * @param friend_id
+     */
+    @Delete("delete from message where user_id=#{user_id} and friend_id =#{friend_id}")
+    void deleteMessage(@Param("user_id")String user_id,@Param("friend_id")String friend_id);
 
 }

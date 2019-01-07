@@ -1,9 +1,12 @@
 package org.clchat.servlet;
 
+import com.mysql.cj.xdevapi.JsonParser;
+import com.mysql.cj.xdevapi.JsonString;
 import net.sf.json.JSONObject;
+import net.sf.json.processors.JsonBeanProcessor;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.mysql.entity.UserIP;
+import org.mysql.entity.Message;
 import org.mysql.mapper.MySQLUserMapper;
 import org.mysql.util.MySQLDB;
 
@@ -13,10 +16,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
 
-@WebServlet(name = "getFriendIPServlet",urlPatterns = "/getip")
-public class getFriendIPServlet extends HttpServlet {
+@WebServlet(name = "AddMessageServlet",urlPatterns = "/addMessage")
+public class AddMessageServlet extends HttpServlet {
     SqlSessionFactory sqlSessionFactory;
     SqlSession sqlSession;
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -28,16 +30,13 @@ public class getFriendIPServlet extends HttpServlet {
         sqlSession = sqlSessionFactory.openSession();
         MySQLUserMapper sqlUtil;
         sqlUtil = sqlSession.getMapper(MySQLUserMapper.class);
-        String friend_id = request.getParameter("friend_id");
-        UserIP userIP = sqlUtil.selectUserIP(friend_id);
-        PrintWriter out = response.getWriter();
-        if(userIP == null){
-            out.print(0);
-        }else {
-            out.print(userIP.getUser_ip());
-        }
-        out.flush();
-        out.close();
+        String json = request.getParameter("message");
+        Message message = (Message) JSONObject.toBean(JSONObject.fromObject(json),Message.class);
+        //信息发出方
+        sqlUtil.addMessage(message.getUser_id(),message.getFriend_id(),message.getMessage(),message.getMessage_state(),message.getPut_id(),message.getTime());
+        //信息接收方
+        sqlUtil.addMessage(message.getFriend_id(),message.getUser_id(),message.getMessage(),0,0,message.getTime());
+        sqlSession.commit();
         sqlSession.close();
     }
 }

@@ -34,11 +34,11 @@ public class LoginServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String username = request.getParameter("username");
         String password = PasswordSHA1Util.generateSHA1(request.getParameter("password"));
-        SqlSessionFactory sqlSessionFactory = MySQLDB.getSqlSession();
+        SqlSessionFactory sqlSessionFactory = MySQLDB.getSqlSession(); //连接数据库得到工厂对象
         SqlSession sqlSession;
-        sqlSession = sqlSessionFactory.openSession();
+        sqlSession = sqlSessionFactory.openSession();  //得到一个数据库会话
         MySQLUserMapper sqlUtil;
-        sqlUtil = sqlSession.getMapper(MySQLUserMapper.class);
+        sqlUtil = sqlSession.getMapper(MySQLUserMapper.class);  //得到Mapper接口对象
         User user = sqlUtil.select_user(username);
         PrintWriter out = response.getWriter();
         if (user != null) {
@@ -47,15 +47,21 @@ public class LoginServlet extends HttpServlet {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("user", user_json);
 
-                List<UserFriend> user_add_friend = sqlUtil.getFriendAddUser(username);
+                List<UserFriend> user_add_friend = sqlUtil.getUserAddFriend(username);
                 if(!user_add_friend.isEmpty()){
                     List<HashMap> uer_add_friend_list = getUserFriendData(user_add_friend);
                     jsonObject.put("user_add_friend",uer_add_friend_list);
                 }
 
-                List<UserFriend> friend_add_user = sqlUtil.getUserAddFriend(username);
-                if(!user_add_friend.isEmpty()){
-                    List<HashMap> friend_add_user_list = getUserFriendData(friend_add_user);
+                List<UserFriend> friend_add_user = sqlUtil.getFriendAddUser(username);
+                if(!friend_add_user.isEmpty()){
+                    List<HashMap> friend_add_user_list = new ArrayList<HashMap>();
+                    for(UserFriend userFriend : friend_add_user){
+                        HashMap<String,String> hashMap = new HashMap<String, String>();
+                        hashMap.put("friend_id",userFriend.getUser_id());
+                        hashMap.put("friend_name",sqlUtil.select_user(userFriend.getUser_id()).getUser_name());
+                        friend_add_user_list.add(hashMap);
+                    }
                     jsonObject.put("friend_add_user",friend_add_user_list);
                 }
 
@@ -75,7 +81,6 @@ public class LoginServlet extends HttpServlet {
                     }
                 }
 
-                System.out.println(jsonObject);
                 String user_ip = request.getParameter("user_ip");
                 if(sqlUtil.selectUserIP(username)==null) {
                     sqlUtil.addUserIP(username, user_ip);
@@ -83,6 +88,7 @@ public class LoginServlet extends HttpServlet {
                     sqlUtil.updateUserIP(user_ip,username);
                 }
                 out.print(jsonObject);
+                System.out.println(jsonObject);
                 sqlUtil.updateIsMessage(username);
                 sqlSession.getMapper(UpdateUserDataMapper.class).updateUserState(1,username);
             } else {
@@ -128,7 +134,7 @@ public class LoginServlet extends HttpServlet {
      * @param userFriendList
      * @return
      */
-    private List<HashMap> getUserFriendData(List<UserFriend> userFriendList){
+    public static List<HashMap> getUserFriendData(List<UserFriend> userFriendList){
 
         if(!userFriendList.isEmpty()){
             List<HashMap> hashMapList = new ArrayList<HashMap>();
